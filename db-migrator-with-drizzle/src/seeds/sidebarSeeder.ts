@@ -69,6 +69,22 @@ export async function sidebarSeeder(): Promise<void> {
             updated_at: new Date('2026-06-14 13:05:54'),
             deleted_at: null,
         },
+        {
+            id: 3, 
+            parent_id: null,
+            label: 'Logbook',
+            route_name: 'admin.logbook.index', 
+            icon: '_admin._layout.icons.sidebar.logbook',
+            group: 'utama',
+            sort_order: 2, 
+            is_active: 1,
+            created_by: null,
+            updated_by: null,
+            deleted_by: null,
+            created_at: new Date(),
+            updated_at: new Date(),
+            deleted_at: null,
+        },
     ];
 
     for (const menu of menus) {
@@ -105,6 +121,12 @@ export async function sidebarSeeder(): Promise<void> {
             access_type: 1,
             created_by: 2,
             created_at: new Date('2026-06-29 12:27:40'),
+        },
+        {
+            id: 5,
+            sidebar_menu_id: 3,
+            access_type: 1, 
+            created_at: new Date(),
         },
     ];
 

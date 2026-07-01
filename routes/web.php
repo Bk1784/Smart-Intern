@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\SidebarMenuController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\LogbookController;
 use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\Route;
 
@@ -53,6 +54,10 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/change-password', [UserController::class, 'changePassword'])->name('change_password');
         Route::post('/change-password', [UserController::class, 'doChangePassword'])->name('do_change_password');
+    });
+
+    Route::prefix('logbook')->name('logbook.')->group(function () {
+        Route::get('/', [LogbookController::class, 'index'])->name('index');
     });
 
 });
