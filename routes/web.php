@@ -60,6 +60,8 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [LogbookController::class, 'index'])->name('index');
         Route::get('/add', [LogbookController::class, 'add'])->name('add');
         Route::post('/create', [LogbookController::class, 'doCreate'])->name('create');
+        Route::get('/update/{id}', [LogbookController::class, 'update'])->name('update');
+        Route::post('/do_update/{id}', [LogbookController::class, 'doUpdate'])->name('do_update');
     });
 
 });

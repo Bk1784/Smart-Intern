@@ -29,4 +29,20 @@ class LogbookUsecase
             'created_by' => $userId
         ]);
     }
+
+    public function getById(int $id, int $userId): ?Logbook
+    {
+        return Logbook::query()->where('id', $id)->where('user_id', $userId)->first();
+    }
+
+    public function update(Logbook $logbook, array $data, int $userId): Logbook
+    {
+        $logbook->update([
+            'tanggal' => $data['tanggal'],
+            'deskripsi' => $data['deskripsi'],
+            'updated_by' => $userId
+        ]);
+
+        return $logbook;
+    }
 }
