@@ -2,6 +2,7 @@
 
 namespace App\Usecase;
 
+use App\Constants\ResponseConst;
 use App\Models\Logbook;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -44,5 +45,12 @@ class LogbookUsecase
         ]);
 
         return $logbook;
+    }
+
+    public function delete(int $id, int $userId): bool
+    {
+        $logbook = Logbook::query()->where('id', $id)->where('user_id', $userId)->first();
+
+        return $logbook->delete();
     }
 }

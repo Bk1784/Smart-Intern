@@ -65,4 +65,11 @@ class LogbookController extends Controller
 
         return redirect()->route('admin.logbook.index')->with('success', ResponseConst::SUCCESS_MESSAGE_UPDATED);
     }
+
+    public function delete(int $id)
+    {
+        $this->logbookUsecase->delete($id, Auth::id());
+
+        return redirect()->route('admin.logbook.index')->with('success', ResponseConst::SUCCESS_MESSAGE_DELETED);
+    }
 }

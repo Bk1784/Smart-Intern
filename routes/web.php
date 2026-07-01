@@ -62,6 +62,7 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
         Route::post('/create', [LogbookController::class, 'doCreate'])->name('create');
         Route::get('/update/{id}', [LogbookController::class, 'update'])->name('update');
         Route::post('/do_update/{id}', [LogbookController::class, 'doUpdate'])->name('do_update');
+        Route::delete('/delete/{id}', [LogbookController::class, 'delete'])->name('delete');
     });
 
 });
