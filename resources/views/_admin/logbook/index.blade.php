@@ -9,7 +9,7 @@
     
                 Download
             </x-admin.button>
-            <x-admin.button href="#" class="font-bold">
+            <x-admin.button href="{{ route('admin.logbook.add') }}" class="font-bold">
                 @include('_admin._layout.icons.add')
                 Tambah Data
             </x-admin.button>
