@@ -16,7 +16,9 @@
                     <label class="block text-sm font-medium mb-2 text-gray-800 dark:text-neutral-200">
                         Tanggal
                     </label>
-                    <x-admin.input type="date" name="tanggal" :value="old('tanggal', now()->format('Y-m-d'))" />
+                    <x-admin.input type="text" name="tanggal" id="tanggal-input" autocomplete="off"
+                        :value="old('tanggal', now()->format('Y-m-d'))"
+                        placeholder="Pilih tanggal..." />
                     @error('tanggal')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -47,4 +49,20 @@
             </div>
         </form>
     </div>
+
+    @push('scripts')
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
+
+        <script>
+            flatpickr("#tanggal-input", {
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d F Y",
+                locale: "id",
+                maxDate: "today",
+            });
+        </script>
+    @endpush
 @endsection
