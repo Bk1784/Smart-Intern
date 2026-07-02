@@ -4,6 +4,7 @@ namespace App\Constants;
 
 class DatabaseConst
 {
+
     const SQL_READ = 'mysql_read';
 
     public static function USER(): string
@@ -24,6 +25,11 @@ class DatabaseConst
     public static function SIDEBAR_MENU_GROUP(): string
     {
         return self::DB_CORE().'.sidebar_menu_groups';
+    }
+
+    public static function LOGBOOK(): string
+    {
+        return self::DB_CORE().'.logbooks';
     }
 
     public static function DB_CORE(): string

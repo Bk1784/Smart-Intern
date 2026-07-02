@@ -2,11 +2,15 @@
 
 namespace App\Usecase;
 
+use App\Constants\DatabaseConst;
 use App\Constants\ResponseConst;
 use App\Models\Logbook;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use Illuminate\Database\Eloquent\Collection;
+use Exception;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Http\Presenter\Response;
 
 
 class LogbookUsecase
@@ -19,21 +23,43 @@ class LogbookUsecase
         //
     }
 
-    public function getAll(int $userId, ?string $startDate = null, ?string $endDate = null): Collection
+    public function getAll(int $userId, ?string $startDate = null, ?string $endDate = null): array
     {
-        $query = Logbook::query()
-            ->where('user_id', $userId);
+        try {
+            $query = DB::table(DatabaseConst::LOGBOOK())
+                ->whereNull('deleted_at')
+                ->where('user_id', $userId)
+                ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                    return $query->whereBetween('tanggal', [$startDate, $endDate]);
+                })
+                ->when($startDate && !$endDate, function ($query) use ($startDate) {
+                    return $query->where('tanggal', '>=', $startDate);
+                })
+                ->when(!$startDate && $endDate, function ($query) use ($endDate) {
+                    return $query->where('tanggal', '<=', $endDate);
+                })
+                ->orderBy('tanggal', 'desc');
 
-        if ($startDate && $endDate) {
-            $query->whereBetween('tanggal', [$startDate, $endDate]);
-        } elseif ($startDate) {
-            $query->where('tanggal', '>=', $startDate);
-        } elseif ($endDate) {
-            $query->where('tanggal', '<=', $endDate);
+            $data = $query->get();
+
+            return Response::buildSuccess(
+                [
+                    'list' => $data,
+                ],
+                ResponseConst::HTTP_SUCCESS
+            );
+        } catch (Exception $e) {
+            Log::error(
+                message: $e->getMessage(),
+                context: [
+                    'method' => __METHOD__,
+                ]
+            );
+
+            return Response::buildErrorService($e->getMessage());
         }
-
-        return $query->orderBy('tanggal', 'desc')->get();
     }
+
 
     public function findById(int $id, int $userId): ?Logbook
     {
@@ -69,11 +95,37 @@ class LogbookUsecase
         return $logbook;
     }
 
-    public function delete(int $id, int $userId): bool
+    public function delete(int $id, int $userId): array
     {
-        $logbook = Logbook::query()->where('id', $id)->where('user_id', $userId)->first();
+        try {
+            $logbook = DB::table(DatabaseConst::LOGBOOK())
+                ->whereNull('deleted_at')
+                ->where('id', $id)
+                ->where('user_id', $userId)
+                ->first();
 
-        return $logbook->delete();
+            if (!$logbook) {
+                return Response::buildErrorService('Data tidak ditemukan', 404);
+            }
+
+            DB::table(DatabaseConst::LOGBOOK())
+                ->where('id', $id)
+                ->update([
+                    'deleted_at' => now(),
+                    'deleted_by' => $userId,
+                ]);
+
+            return Response::buildSuccess([], ResponseConst::HTTP_SUCCESS);
+        } catch (Exception $e) {
+            Log::error(
+                message: $e->getMessage(),
+                context: [
+                    'method' => __METHOD__,
+                ]
+            );
+
+            return Response::buildErrorService($e->getMessage());
+        }
     }
 
       /**

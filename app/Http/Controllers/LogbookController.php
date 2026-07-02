@@ -30,12 +30,14 @@ class LogbookController extends Controller
             $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->format('Y-m-d');
         }
 
-        $logbooks = $this->logbookUsecase->getAll(Auth::id(), $startDate, $endDate);
+        $result = $this->logbookUsecase->getAll(Auth::id(), $startDate, $endDate);
 
-        $data = $logbooks->map(function ($item) {
+        $logbooks = $result['data']['list'] ?? [];
+
+        $data = collect($logbooks)->map(function ($item) {
             return [
                 'id' => $item->id,
-                'tanggal' => $item->tanggal->translatedFormat('d F Y'),
+                'tanggal' => Carbon::parse($item->tanggal)->translatedFormat('d F Y'),
                 'deskripsi' => Str::words($item->deskripsi, 30, '...'),
             ];
         });
@@ -143,8 +145,16 @@ class LogbookController extends Controller
 
     public function delete(int $id)
     {
-        $this->logbookUsecase->delete($id, Auth::id());
+        $result = $this->logbookUsecase->delete($id, Auth::id());
 
-        return redirect()->route('admin.logbook.index')->with('success', ResponseConst::SUCCESS_MESSAGE_DELETED);
+        if (!$result['success']) {
+            return redirect()
+                ->route('admin.logbook.index')
+                ->with('error', $result['message'] ?? ResponseConst::DEFAULT_ERROR_MESSAGE);
+        }
+
+        return redirect()
+            ->route('admin.logbook.index')
+            ->with('success', ResponseConst::SUCCESS_MESSAGE_DELETED);
     }
 }
