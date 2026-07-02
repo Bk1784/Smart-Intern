@@ -32,6 +32,14 @@ class LogbookUsecase
         return $query->orderBy('tanggal', 'desc')->get();
     }
 
+    public function findById(int $id, int $userId): ?Logbook
+    {
+        return Logbook::query()
+            ->where('id', $id)
+            ->where('user_id', $userId)
+            ->first();
+    }
+
     public function create(array $data, int $userId): Logbook
     {
         return Logbook::create([

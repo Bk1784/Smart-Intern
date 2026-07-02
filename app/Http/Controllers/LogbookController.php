@@ -33,6 +33,19 @@ class LogbookController extends Controller
         return view('_admin.logbook.index', compact('data', 'startDate', 'endDate'));
     }
 
+    public function detail(int $id)
+    {
+        $logbook = $this->logbookUsecase->findById($id, Auth::id());
+
+        return view('_admin.logbook.detail', [
+            'logbook' => [
+                'id' => $logbook->id,
+                'tanggal' => $logbook->tanggal->translatedFormat('d F Y'),
+                'deskripsi' => $logbook->deskripsi,
+            ],
+        ]);
+    }
+
     public function add()
     {
         return view('_admin.logbook.add');
