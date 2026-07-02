@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Constants\ResponseConst;
 use App\Models\Logbook;
 use App\Usecase\LogbookUsecase;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Str;
@@ -44,6 +45,47 @@ class LogbookController extends Controller
                 'deskripsi' => $logbook->deskripsi,
             ],
         ]);
+    }
+
+        public function download(Request $request)
+    {
+        $type = $request->query('type', 'custom');
+
+        switch ($type) {
+            case 'weekly':
+                $request->validate(['week' => 'required']);
+                [$startDate, $endDate] = $this->logbookUsecase->getWeekRange($request->query('week'));
+                $label = 'Mingguan';
+                break;
+
+            case 'monthly':
+                $request->validate(['month' => 'required']);
+                [$startDate, $endDate] = $this->logbookUsecase->getMonthRange($request->query('month'));
+                $label = 'Bulanan';
+                break;
+
+            default:
+                $request->validate([
+                    'start_date' => 'required|date',
+                    'end_date' => 'required|date|after_or_equal:start_date',
+                ]);
+                $startDate = $request->query('start_date');
+                $endDate = $request->query('end_date');
+                $label = 'Custom';
+                break;
+        }
+
+        $report = $this->logbookUsecase->getReportData(Auth::id(), $startDate, $endDate);
+
+        $pdf = Pdf::loadView('_admin.logbook.report-pdf', [
+            'report' => $report,
+            'user' => Auth::user(),
+            'periode' => \Carbon\Carbon::parse($startDate)->translatedFormat('d F Y') . ' - ' . \Carbon\Carbon::parse($endDate)->translatedFormat('d F Y'),
+        ]);
+
+        $filename = 'logbook-' . Str::slug($label) . '-' . now()->format('Ymd_His') . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     public function add()

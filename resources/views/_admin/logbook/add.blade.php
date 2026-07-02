@@ -35,6 +35,7 @@
                 </div>
 
             </div>
+            <br>
 
             <div class="mt-5 flex items-center gap-x-2">
                 <x-admin.button type="submit" color="primary" class="font-bold">

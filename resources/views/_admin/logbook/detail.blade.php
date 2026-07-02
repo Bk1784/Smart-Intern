@@ -35,6 +35,9 @@
         </div>
 
         <div class="mt-6 flex items-center gap-x-2">
+            <x-admin.button href="{{ route('admin.logbook.update', $logbook['id']) }}" color="primary" class="font-bold">
+                Edit Logbook
+            </x-admin.button>
             <x-admin.button href="{{ route('admin.logbook.index') }}" color="outline-secondary">
                 Kembali
             </x-admin.button>
