@@ -64,18 +64,23 @@
         <form action="{{ route('admin.logbook.index') }}" method="GET" navigate-form
             class="flex flex-col sm:flex-row items-center gap-3">
             <div class="w-full sm:w-48">
-                <x-admin.input type="date" name="start_date" :value="$startDate ?? ''" size="sm" />
+                <x-admin.select :label="null" name="month" size="sm" :value="$month ?? ''" :options="[
+                    '' => 'Semua Bulan',
+                    '1' => 'Januari', '2' => 'Februari', '3' => 'Maret',
+                    '4' => 'April', '5' => 'Mei', '6' => 'Juni',
+                    '7' => 'Juli', '8' => 'Agustus', '9' => 'September',
+                    '10' => 'Oktober', '11' => 'November', '12' => 'Desember',
+                ]" />
             </div>
-            <span class="text-sm text-gray-400 dark:text-neutral-500">s/d</span>
-            <div class="w-full sm:w-48">
-                <x-admin.input type="date" name="end_date" :value="$endDate ?? ''" size="sm" />
+            <div class="w-full sm:w-32">
+                <x-admin.select :label="null" name="year" size="sm" :value="$year ?? ''" :options="$yearOptions" />
             </div>
             <div class="flex items-center gap-2">
                 <x-admin.button type="submit" size="sm" color="primary">
                     @include('_admin._layout.icons.search')
                     Cari
                 </x-admin.button>
-                @if (!empty($startDate) || !empty($endDate))
+                @if (!empty($month) || !empty($year))
                     <x-admin.button href="{{ route('admin.logbook.index') }}" size="sm" color="outline-secondary">
                         @include('_admin._layout.icons.reset')
                         Reset

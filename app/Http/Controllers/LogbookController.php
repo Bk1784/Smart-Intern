@@ -6,6 +6,7 @@ use App\Constants\ResponseConst;
 use App\Models\Logbook;
 use App\Usecase\LogbookUsecase;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Str;
@@ -18,8 +19,16 @@ class LogbookController extends Controller
 
     public function index(Request $request)
     {
-        $startDate = $request->query('start_date');
-        $endDate = $request->query('end_date');
+        $month = $request->query('month');
+        $year = $request->query('year');
+
+        $startDate = null;
+        $endDate = null;
+
+        if ($month && $year) {
+            $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->format('Y-m-d');
+        }
 
         $logbooks = $this->logbookUsecase->getAll(Auth::id(), $startDate, $endDate);
 
@@ -27,11 +36,17 @@ class LogbookController extends Controller
             return [
                 'id' => $item->id,
                 'tanggal' => $item->tanggal->translatedFormat('d F Y'),
-                'deskripsi' => Str::limit($item->deskripsi, 50),
+                'deskripsi' => Str::words($item->deskripsi, 30, '...'),
             ];
         });
 
-        return view('_admin.logbook.index', compact('data', 'startDate', 'endDate'));
+        $yearOptions = ['' => 'Tahun'];
+        $currentYear = now()->year;
+        for ($y = $currentYear - 2; $y <= $currentYear + 1; $y++) {
+            $yearOptions[$y] = (string) $y;
+        }
+
+        return view('_admin.logbook.index', compact('data', 'month', 'year', 'yearOptions'));
     }
 
     public function detail(int $id)
