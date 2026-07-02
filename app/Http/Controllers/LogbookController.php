@@ -53,12 +53,20 @@ class LogbookController extends Controller
 
     public function detail(int $id)
     {
-        $logbook = $this->logbookUsecase->findById($id, Auth::id());
+        $result = $this->logbookUsecase->findById($id, Auth::id());
+
+        if (!$result['success']) {
+            return redirect()
+                ->route('admin.logbook.index')
+                ->with('error', $result['message'] ?? ResponseConst::DEFAULT_ERROR_MESSAGE);
+        }
+
+        $logbook = $result['data']['item'];
 
         return view('_admin.logbook.detail', [
             'logbook' => [
                 'id' => $logbook->id,
-                'tanggal' => $logbook->tanggal->translatedFormat('d F Y'),
+                'tanggal' => Carbon::parse($logbook->tanggal)->translatedFormat('d F Y'),
                 'deskripsi' => $logbook->deskripsi,
             ],
         ]);
@@ -117,14 +125,29 @@ class LogbookController extends Controller
             'deskripsi' => 'required|string|max:2000',
         ]);
 
-        $this->logbookUsecase->create($validated, Auth::id());
+        $result = $this->logbookUsecase->create($validated, Auth::id());
 
-        return redirect()->route('admin.logbook.index')->with('success', ResponseConst::SUCCESS_MESSAGE_CREATED);
+        if (!$result['success']) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', $result['message'] ?? ResponseConst::DEFAULT_ERROR_MESSAGE);
+        }
+
+        return redirect()
+            ->route('admin.logbook.index')
+            ->with('success', ResponseConst::SUCCESS_MESSAGE_CREATED);
     }
 
     public function update(int $id)
     {
-        $logbook = $this->logbookUsecase->getById($id, Auth::id());
+        $result = $this->logbookUsecase->getById($id, Auth::id());
+
+        if(!$result['success']){
+            return redirect()->route('admin.logbook.index')->with('error', $result['message'] ?? ResponseConst::DEFAULT_ERROR_MESSAGE);
+        }
+
+        $logbook = $result['data']['item'];
 
         return view('_admin.logbook.update', compact('logbook'));
     }

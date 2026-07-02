@@ -60,28 +60,96 @@ class LogbookUsecase
         }
     }
 
-
-    public function findById(int $id, int $userId): ?Logbook
+    public function findById(int $id, int $userId): array
     {
-        return Logbook::query()
-            ->where('id', $id)
-            ->where('user_id', $userId)
-            ->first();
+        try {
+            $logbook = DB::table(DatabaseConst::LOGBOOK())
+                ->whereNull('deleted_at')
+                ->where('id', $id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$logbook) {
+                return Response::buildErrorService('Data tidak ditemukan');
+            }
+
+            return Response::buildSuccess(
+                [
+                    'item' => $logbook,
+                ],
+                ResponseConst::HTTP_SUCCESS
+            );
+        } catch (Exception $e) {
+            Log::error(
+                message: $e->getMessage(),
+                context: [
+                    'method' => __METHOD__,
+                ]
+            );
+
+            return Response::buildErrorService($e->getMessage());
+        }
     }
 
-    public function create(array $data, int $userId): Logbook
+    public function create(array $data, int $userId): array
     {
-        return Logbook::create([
-            'user_id' => $userId,
-            'tanggal' => $data['tanggal'],
-            'deskripsi' => $data['deskripsi'],
-            'created_by' => $userId
-        ]);
+        DB::beginTransaction();
+        try {
+            DB::table(DatabaseConst::LOGBOOK())
+                ->insert([
+                    'user_id' => $userId,
+                    'tanggal' => $data['tanggal'],
+                    'deskripsi' => $data['deskripsi'],
+                    'created_by' => $userId,
+                    'created_at' => now(),
+                ]);
+
+            DB::commit();
+
+            return Response::buildSuccessCreated();
+        } catch (Exception $e) {
+            DB::rollback();
+
+            Log::error(
+                message: $e->getMessage(),
+                context: [
+                    'method' => __METHOD__,
+                ]
+            );
+
+            return Response::buildErrorService($e->getMessage());
+        }
     }
 
-    public function getById(int $id, int $userId): ?Logbook
+    public function getById(int $id, int $userId): array
     {
-        return Logbook::query()->where('id', $id)->where('user_id', $userId)->first();
+        try {
+            $logbook = DB::table(DatabaseConst::LOGBOOK())
+                ->whereNull('deleted_at')
+                ->where('id', $id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$logbook) {
+                return Response::buildErrorService('Data tidak ditemukan', 404);
+            }
+
+            return Response::buildSuccess(
+                [
+                    'item' => $logbook,
+                ],
+                ResponseConst::HTTP_SUCCESS
+            );
+        } catch (Exception $e) {
+            Log::error(
+                message: $e->getMessage(),
+                context: [
+                    'method' => __METHOD__,
+                ]
+            );
+
+            return Response::buildErrorService($e->getMessage());
+        }
     }
 
     public function update(Logbook $logbook, array $data, int $userId): Logbook
