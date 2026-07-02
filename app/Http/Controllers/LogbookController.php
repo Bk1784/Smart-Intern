@@ -7,6 +7,7 @@ use App\Models\Logbook;
 use App\Usecase\LogbookUsecase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Str;
 
 class LogbookController extends Controller
 {
@@ -14,20 +15,24 @@ class LogbookController extends Controller
         protected LogbookUsecase $logbookUsecase
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
-    $logbooks = $this->logbookUsecase->getAll(Auth::id());
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
 
-    $data = $logbooks->map(function ($item) {
+        $logbooks = $this->logbookUsecase->getAll(Auth::id(), $startDate, $endDate);
+
+        $data = $logbooks->map(function ($item) {
             return [
                 'id' => $item->id,
                 'tanggal' => $item->tanggal->translatedFormat('d F Y'),
-                'deskripsi' => $item->deskripsi,
+                'deskripsi' => Str::limit($item->deskripsi, 50),
             ];
         });
 
-    return view('_admin.logbook.index', compact('data'));
+        return view('_admin.logbook.index', compact('data', 'startDate', 'endDate'));
     }
+
     public function add()
     {
         return view('_admin.logbook.add');

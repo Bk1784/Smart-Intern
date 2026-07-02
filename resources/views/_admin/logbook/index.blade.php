@@ -6,7 +6,6 @@
     <x-admin.page-header title="Data Logbook" subtitle="Logbook Pengguna">
         <div class="flex items-center gap-x-2">
             <x-admin.button href="#" color="outline-secondary" class="font-bold">
-    
                 Download
             </x-admin.button>
             <x-admin.button href="{{ route('admin.logbook.add') }}" class="font-bold">
@@ -15,6 +14,31 @@
             </x-admin.button>
         </div>
     </x-admin.page-header>
+
+    <div class="mb-6">
+        <form action="{{ route('admin.logbook.index') }}" method="GET" navigate-form
+            class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="w-full sm:w-48">
+                <x-admin.input type="date" name="start_date" :value="$startDate ?? ''" size="sm" />
+            </div>
+            <span class="text-sm text-gray-400 dark:text-neutral-500">s/d</span>
+            <div class="w-full sm:w-48">
+                <x-admin.input type="date" name="end_date" :value="$endDate ?? ''" size="sm" />
+            </div>
+            <div class="flex items-center gap-2">
+                <x-admin.button type="submit" size="sm" color="primary">
+                    @include('_admin._layout.icons.search')
+                    Cari
+                </x-admin.button>
+                @if (!empty($startDate) || !empty($endDate))
+                    <x-admin.button href="{{ route('admin.logbook.index') }}" size="sm" color="outline-secondary">
+                        @include('_admin._layout.icons.reset')
+                        Reset
+                    </x-admin.button>
+                @endif
+            </div>
+        </form>
+    </div>
 
     <x-admin.table.wrapper>
         <x-admin.table>

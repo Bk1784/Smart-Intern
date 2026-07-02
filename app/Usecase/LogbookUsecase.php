@@ -16,9 +16,20 @@ class LogbookUsecase
         //
     }
 
-    public function getAll(int $userId): Collection
+    public function getAll(int $userId, ?string $startDate = null, ?string $endDate = null): Collection
     {
-        return Logbook::query()->where('user_id', $userId)->orderBy('tanggal', 'desc')->get();
+        $query = Logbook::query()
+            ->where('user_id', $userId);
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('tanggal', [$startDate, $endDate]);
+        } elseif ($startDate) {
+            $query->where('tanggal', '>=', $startDate);
+        } elseif ($endDate) {
+            $query->where('tanggal', '<=', $endDate);
+        }
+
+        return $query->orderBy('tanggal', 'desc')->get();
     }
 
     public function create(array $data, int $userId): Logbook
