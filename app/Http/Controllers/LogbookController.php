@@ -53,7 +53,7 @@ class LogbookController extends Controller
 
     public function detail(int $id)
     {
-        $result = $this->logbookUsecase->findById($id, Auth::id());
+        $result = $this->logbookUsecase->getById($id, Auth::id());
 
         if (!$result['success']) {
             return redirect()
@@ -72,7 +72,7 @@ class LogbookController extends Controller
         ]);
     }
 
-        public function download(Request $request)
+    public function download(Request $request)
     {
         $type = $request->query('type', 'custom');
 
@@ -100,12 +100,20 @@ class LogbookController extends Controller
                 break;
         }
 
-        $report = $this->logbookUsecase->getReportData(Auth::id(), $startDate, $endDate);
+        $result = $this->logbookUsecase->getReportData(Auth::id(), $startDate, $endDate);
+
+        if (!$result['success']) {
+            return redirect()
+                ->route('admin.logbook.index')
+                ->with('error', $result['message'] ?? ResponseConst::DEFAULT_ERROR_MESSAGE);
+        }
+
+        $report = $result['data']['report'];
 
         $pdf = Pdf::loadView('_admin.logbook.report-pdf', [
             'report' => $report,
             'user' => Auth::user(),
-            'periode' => \Carbon\Carbon::parse($startDate)->translatedFormat('d F Y') . ' - ' . \Carbon\Carbon::parse($endDate)->translatedFormat('d F Y'),
+            'periode' => Carbon::parse($startDate)->translatedFormat('d F Y') . ' - ' . Carbon::parse($endDate)->translatedFormat('d F Y'),
         ]);
 
         $filename = 'logbook-' . Str::slug($label) . '-' . now()->format('Ymd_His') . '.pdf';
@@ -154,16 +162,23 @@ class LogbookController extends Controller
 
     public function doUpdate(Request $request, int $id)
     {
-        $logbook = $this->logbookUsecase->getById($id, Auth::id());
-
         $validated = $request->validate([
             'tanggal' => 'required|date',
             'deskripsi' => 'required|string|max:2000',
         ]);
 
-        $this->logbookUsecase->update($logbook, $validated, Auth::id());
+        $result = $this->logbookUsecase->update($id, $validated, Auth::id());
 
-        return redirect()->route('admin.logbook.index')->with('success', ResponseConst::SUCCESS_MESSAGE_UPDATED);
+        if (!$result['success']) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', $result['message'] ?? ResponseConst::DEFAULT_ERROR_MESSAGE);
+        }
+
+        return redirect()
+            ->route('admin.logbook.index')
+            ->with('success', ResponseConst::SUCCESS_MESSAGE_UPDATED);
     }
 
     public function delete(int $id)

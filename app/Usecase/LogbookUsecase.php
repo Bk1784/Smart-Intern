@@ -4,7 +4,6 @@ namespace App\Usecase;
 
 use App\Constants\DatabaseConst;
 use App\Constants\ResponseConst;
-use App\Models\Logbook;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Exception;
@@ -45,37 +44,6 @@ class LogbookUsecase
             return Response::buildSuccess(
                 [
                     'list' => $data,
-                ],
-                ResponseConst::HTTP_SUCCESS
-            );
-        } catch (Exception $e) {
-            Log::error(
-                message: $e->getMessage(),
-                context: [
-                    'method' => __METHOD__,
-                ]
-            );
-
-            return Response::buildErrorService($e->getMessage());
-        }
-    }
-
-    public function findById(int $id, int $userId): array
-    {
-        try {
-            $logbook = DB::table(DatabaseConst::LOGBOOK())
-                ->whereNull('deleted_at')
-                ->where('id', $id)
-                ->where('user_id', $userId)
-                ->first();
-
-            if (!$logbook) {
-                return Response::buildErrorService('Data tidak ditemukan');
-            }
-
-            return Response::buildSuccess(
-                [
-                    'item' => $logbook,
                 ],
                 ResponseConst::HTTP_SUCCESS
             );
@@ -152,19 +120,10 @@ class LogbookUsecase
         }
     }
 
-    public function update(Logbook $logbook, array $data, int $userId): Logbook
-    {
-        $logbook->update([
-            'tanggal' => $data['tanggal'],
-            'deskripsi' => $data['deskripsi'],
-            'updated_by' => $userId
-        ]);
 
-        return $logbook;
-    }
-
-    public function delete(int $id, int $userId): array
+    public function update(int $id, array $data, int $userId): array
     {
+        DB::beginTransaction();
         try {
             $logbook = DB::table(DatabaseConst::LOGBOOK())
                 ->whereNull('deleted_at')
@@ -173,6 +132,48 @@ class LogbookUsecase
                 ->first();
 
             if (!$logbook) {
+                DB::rollback();
+                return Response::buildErrorService('Data tidak ditemukan', 404);
+            }
+
+            DB::table(DatabaseConst::LOGBOOK())
+                ->where('id', $id)
+                ->update([
+                    'tanggal' => $data['tanggal'],
+                    'deskripsi' => $data['deskripsi'],
+                    'updated_by' => $userId,
+                    'updated_at' => now(),
+                ]);
+
+            DB::commit();
+
+            return Response::buildSuccess([], ResponseConst::HTTP_SUCCESS);
+        } catch (Exception $e) {
+            DB::rollback();
+
+            Log::error(
+                message: $e->getMessage(),
+                context: [
+                    'method' => __METHOD__,
+                ]
+            );
+
+            return Response::buildErrorService($e->getMessage());
+        }
+    }
+
+    public function delete(int $id, int $userId): array
+    {
+        DB::beginTransaction();
+        try {
+            $logbook = DB::table(DatabaseConst::LOGBOOK())
+                ->whereNull('deleted_at')
+                ->where('id', $id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$logbook) {
+                DB::rollback();
                 return Response::buildErrorService('Data tidak ditemukan', 404);
             }
 
@@ -183,8 +184,12 @@ class LogbookUsecase
                     'deleted_by' => $userId,
                 ]);
 
+            DB::commit();
+
             return Response::buildSuccess([], ResponseConst::HTTP_SUCCESS);
         } catch (Exception $e) {
+            DB::rollback();
+
             Log::error(
                 message: $e->getMessage(),
                 context: [
@@ -249,25 +254,42 @@ class LogbookUsecase
      */
     public function getReportData(int $userId, string $startDate, string $endDate): array
     {
-        $workdays = $this->getWorkdays($startDate, $endDate);
+        try {
+            $workdays = $this->getWorkdays($startDate, $endDate);
 
-        $logbooks = Logbook::query()
-            ->where('user_id', $userId)
-            ->whereBetween('tanggal', [$startDate, $endDate])
-            ->get()
-            ->keyBy(fn ($item) => $item->tanggal->format('Y-m-d'));
+            $logbooks = DB::table(DatabaseConst::LOGBOOK())
+                ->whereNull('deleted_at')
+                ->where('user_id', $userId)
+                ->whereBetween('tanggal', [$startDate, $endDate])
+                ->get()
+                ->keyBy(fn ($item) => Carbon::parse($item->tanggal)->format('Y-m-d'));
 
-        $report = [];
-        foreach ($workdays as $day) {
-            $carbonDay = Carbon::parse($day);
-            $entry = $logbooks->get($day);
+            $report = [];
+            foreach ($workdays as $day) {
+                $carbonDay = Carbon::parse($day);
+                $entry = $logbooks->get($day);
 
-            $report[] = [
-                'tanggal' => $carbonDay->translatedFormat('l, d F Y'),
-                'deskripsi' => $entry ? $entry->deskripsi : null,
-            ];
+                $report[] = [
+                    'tanggal' => $carbonDay->translatedFormat('l, d F Y'),
+                    'deskripsi' => $entry ? $entry->deskripsi : null,
+                ];
+            }
+
+            return Response::buildSuccess(
+                [
+                    'report' => $report,
+                ],
+                ResponseConst::HTTP_SUCCESS
+            );
+        } catch (Exception $e) {
+            Log::error(
+                message: $e->getMessage(),
+                context: [
+                    'method' => __METHOD__,
+                ]
+            );
+
+            return Response::buildErrorService($e->getMessage());
         }
-
-        return $report;
     }
 }
