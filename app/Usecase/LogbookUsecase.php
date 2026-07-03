@@ -102,6 +102,8 @@ class LogbookUsecase
                 return Response::buildErrorService('Data tidak ditemukan', 404);
             }
 
+            $logbook->tanggal = Carbon::parse($logbook->tanggal)->format('Y-m-d');
+
             return Response::buildSuccess(
                 [
                     'item' => $logbook,

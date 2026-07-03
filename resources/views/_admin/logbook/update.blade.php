@@ -16,7 +16,9 @@
                     <label class="block text-sm font-medium mb-2 text-gray-800 dark:text-neutral-200">
                         Tanggal
                     </label>
-                    <x-admin.input type="date" name="tanggal" :value="old('tanggal', $logbook->tanggal)" />
+                    <x-admin.input type="text" name="tanggal" id="tanggal-input" autocomplete="off"
+                        :value="old('tanggal', $logbook->tanggal)"
+                        placeholder="Pilih tanggal..." />
                     @error('tanggal')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -36,7 +38,6 @@
                 </div>
 
             </div>
-            <br>
 
             <div class="mt-5 flex items-center gap-x-2">
                 <x-admin.button type="submit" color="primary" class="font-bold">
