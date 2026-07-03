@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "c46834a8-dd8f-4903-ab87-04508aa1bd28",
-  "prevId": "fb86d80f-0f97-4762-8adb-fda808b9053e",
+  "id": "bcdfc3c9-a306-44c4-8fe9-2dd24f9d8e18",
+  "prevId": "c46834a8-dd8f-4903-ab87-04508aa1bd28",
   "tables": {
     "cache_locks": {
       "name": "cache_locks",
@@ -333,6 +333,73 @@
       "compositePrimaryKeys": {
         "jobs_id": {
           "name": "jobs_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "logbook_images": {
+      "name": "logbook_images",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "logbook_id": {
+          "name": "logbook_id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_path": {
+          "name": "file_path",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "logbook_images_logbook_id_index": {
+          "name": "logbook_images_logbook_id_index",
+          "columns": [
+            "logbook_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "logbook_images_logbook_id_logbooks_id_fk": {
+          "name": "logbook_images_logbook_id_logbooks_id_fk",
+          "tableFrom": "logbook_images",
+          "tableTo": "logbooks",
+          "columnsFrom": [
+            "logbook_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "logbook_images_id": {
+          "name": "logbook_images_id",
           "columns": [
             "id"
           ]

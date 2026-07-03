@@ -175,3 +175,12 @@ export const logbooksTable = mysqlTable('logbooks', {
     index('logbooks_user_id_index').on(t.user_id),
     index('logbooks_tanggal_index').on(t.tanggal),
 ]);
+
+export const logbookImagesTable = mysqlTable('logbook_images', {
+    id: bigint({ mode: 'number', unsigned: true }).autoincrement().primaryKey(),
+    logbook_id: bigint({ mode: 'number', unsigned: true }).notNull().references(() => logbooksTable.id),
+    file_path: varchar({ length: 255 }).notNull(),
+    created_at: timestamp(),
+}, (t) => [
+    index('logbook_images_logbook_id_index').on(t.logbook_id),
+]);

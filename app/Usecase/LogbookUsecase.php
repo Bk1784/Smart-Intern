@@ -10,6 +10,8 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Presenter\Response;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 
 class LogbookUsecase
@@ -59,12 +61,12 @@ class LogbookUsecase
         }
     }
 
-    public function create(array $data, int $userId): array
+   public function create(array $data, int $userId): array
     {
         DB::beginTransaction();
         try {
-            DB::table(DatabaseConst::LOGBOOK())
-                ->insert([
+            $id = DB::table(DatabaseConst::LOGBOOK())
+                ->insertGetId([
                     'user_id' => $userId,
                     'tanggal' => $data['tanggal'],
                     'deskripsi' => $data['deskripsi'],
@@ -74,7 +76,9 @@ class LogbookUsecase
 
             DB::commit();
 
-            return Response::buildSuccessCreated();
+            return Response::buildSuccessCreated([
+                'id' => $id,
+            ]);
         } catch (Exception $e) {
             DB::rollback();
 
@@ -104,19 +108,20 @@ class LogbookUsecase
 
             $logbook->tanggal = Carbon::parse($logbook->tanggal)->format('Y-m-d');
 
+            $images = DB::table(DatabaseConst::LOGBOOK_IMAGE())
+                ->where('logbook_id', $id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
             return Response::buildSuccess(
                 [
                     'item' => $logbook,
+                    'images' => $images,
                 ],
                 ResponseConst::HTTP_SUCCESS
             );
         } catch (Exception $e) {
-            Log::error(
-                message: $e->getMessage(),
-                context: [
-                    'method' => __METHOD__,
-                ]
-            );
+            Log::error(message: $e->getMessage(), context: ['method' => __METHOD__]);
 
             return Response::buildErrorService($e->getMessage());
         }
@@ -179,6 +184,17 @@ class LogbookUsecase
                 return Response::buildErrorService('Data tidak ditemukan', 404);
             }
 
+            // Hapus file fisik gambar terkait
+            $images = DB::table(DatabaseConst::LOGBOOK_IMAGE())
+                ->where('logbook_id', $id)
+                ->get();
+
+            foreach ($images as $image) {
+                Storage::disk('public')->delete($image->file_path);
+            }
+
+            DB::table(DatabaseConst::LOGBOOK_IMAGE())->where('logbook_id', $id)->delete();
+
             DB::table(DatabaseConst::LOGBOOK())
                 ->where('id', $id)
                 ->update([
@@ -191,14 +207,7 @@ class LogbookUsecase
             return Response::buildSuccess([], ResponseConst::HTTP_SUCCESS);
         } catch (Exception $e) {
             DB::rollback();
-
-            Log::error(
-                message: $e->getMessage(),
-                context: [
-                    'method' => __METHOD__,
-                ]
-            );
-
+            Log::error(message: $e->getMessage(), context: ['method' => __METHOD__]);
             return Response::buildErrorService($e->getMessage());
         }
     }
@@ -290,6 +299,80 @@ class LogbookUsecase
                     'method' => __METHOD__,
                 ]
             );
+
+            return Response::buildErrorService($e->getMessage());
+        }
+    }
+
+    public function uploadImages(int $logbookId, array $files, int $userId): array
+    {
+        try {
+            $logbook = DB::table(DatabaseConst::LOGBOOK())
+                ->whereNull('deleted_at')
+                ->where('id', $logbookId)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$logbook) {
+                return Response::buildErrorService('Data tidak ditemukan', 404);
+            }
+
+            foreach ($files as $file) {
+                /** @var UploadedFile $file */
+                $path = $file->store('logbook', 'public');
+
+                DB::table(DatabaseConst::LOGBOOK_IMAGE())->insert([
+                    'logbook_id' => $logbookId,
+                    'file_path' => $path,
+                    'created_at' => now(),
+                ]);
+            }
+
+            return Response::buildSuccess([], ResponseConst::HTTP_SUCCESS);
+        } catch (Exception $e) {
+            Log::error(message: $e->getMessage(), context: ['method' => __METHOD__]);
+
+            return Response::buildErrorService($e->getMessage());
+        }
+    }
+
+    public function getImages(int $logbookId): array
+    {
+        try {
+            $images = DB::table(DatabaseConst::LOGBOOK_IMAGE())
+                ->where('logbook_id', $logbookId)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return Response::buildSuccess(['items' => $images], ResponseConst::HTTP_SUCCESS);
+        } catch (Exception $e) {
+            Log::error(message: $e->getMessage(), context: ['method' => __METHOD__]);
+
+            return Response::buildErrorService($e->getMessage());
+        }
+    }
+
+    public function deleteImage(int $imageId, int $userId): array
+    {
+        try {
+            $image = DB::table(DatabaseConst::LOGBOOK_IMAGE())
+                ->join(DatabaseConst::LOGBOOK().' as l', 'l.id', '=', DatabaseConst::LOGBOOK_IMAGE().'.logbook_id')
+                ->where(DatabaseConst::LOGBOOK_IMAGE().'.id', $imageId)
+                ->where('l.user_id', $userId)
+                ->select(DatabaseConst::LOGBOOK_IMAGE().'.*')
+                ->first();
+
+            if (!$image) {
+                return Response::buildErrorService('Gambar tidak ditemukan', 404);
+            }
+
+            Storage::disk('public')->delete($image->file_path);
+
+            DB::table(DatabaseConst::LOGBOOK_IMAGE())->where('id', $imageId)->delete();
+
+            return Response::buildSuccess([], ResponseConst::HTTP_SUCCESS);
+        } catch (Exception $e) {
+            Log::error(message: $e->getMessage(), context: ['method' => __METHOD__]);
 
             return Response::buildErrorService($e->getMessage());
         }

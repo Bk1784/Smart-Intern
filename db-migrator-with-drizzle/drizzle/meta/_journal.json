@@ -15,6 +15,13 @@
       "when": 1782905531653,
       "tag": "0002_logbooks_table",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1783051430189,
+      "tag": "0002_logbook_images_table",
+      "breakpoints": true
     }
   ]
 }

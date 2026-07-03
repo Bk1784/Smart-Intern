@@ -64,6 +64,7 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/update/{id}', [LogbookController::class, 'update'])->name('update');
         Route::post('/do_update/{id}', [LogbookController::class, 'doUpdate'])->name('do_update');
         Route::delete('/delete/{id}', [LogbookController::class, 'delete'])->name('delete');
+        Route::delete('/image/{id}', [LogbookController::class, 'deleteImage'])->name('image_delete');
         Route::get('/download', [LogbookController::class, 'download'])->name('download');
     });
 

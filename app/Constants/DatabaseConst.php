@@ -36,4 +36,9 @@ class DatabaseConst
     {
         return config('database.connections.mysql.database', 'default');
     }
+
+    public static function LOGBOOK_IMAGE(): string
+    {
+        return self::DB_CORE().'.logbook_images';
+    }
 }

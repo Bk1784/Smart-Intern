@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Constants\ResponseConst;
-use App\Models\Logbook;
 use App\Usecase\LogbookUsecase;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -56,12 +55,11 @@ class LogbookController extends Controller
         $result = $this->logbookUsecase->getById($id, Auth::id());
 
         if (!$result['success']) {
-            return redirect()
-                ->route('admin.logbook.index')
-                ->with('error', $result['message'] ?? ResponseConst::DEFAULT_ERROR_MESSAGE);
+            return redirect()->route('admin.logbook.index')->with('error', $result['message'] ?? ResponseConst::DEFAULT_ERROR_MESSAGE);
         }
 
         $logbook = $result['data']['item'];
+        $images = $result['data']['images'];
 
         return view('_admin.logbook.detail', [
             'logbook' => [
@@ -69,8 +67,10 @@ class LogbookController extends Controller
                 'tanggal' => Carbon::parse($logbook->tanggal)->translatedFormat('d F Y'),
                 'deskripsi' => $logbook->deskripsi,
             ],
+            'images' => $images,
         ]);
     }
+
 
     public function download(Request $request)
     {
@@ -131,20 +131,21 @@ class LogbookController extends Controller
         $validated = $request->validate([
             'tanggal' => 'required|date',
             'deskripsi' => 'required|string|max:2000',
+            'images' => 'nullable|array|max:10',
+            'images.*' => 'nullable|image|max:5120',
         ]);
 
         $result = $this->logbookUsecase->create($validated, Auth::id());
 
         if (!$result['success']) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', $result['message'] ?? ResponseConst::DEFAULT_ERROR_MESSAGE);
+            return back()->withInput()->with('error', $result['message'] ?? 'Gagal menyimpan data.');
         }
 
-        return redirect()
-            ->route('admin.logbook.index')
-            ->with('success', ResponseConst::SUCCESS_MESSAGE_CREATED);
+        if ($request->hasFile('images')) {
+            $this->logbookUsecase->uploadImages($result['data']['id'], $request->file('images'), Auth::id());
+        }
+
+        return redirect()->route('admin.logbook.index')->with('success', ResponseConst::SUCCESS_MESSAGE_CREATED);
     }
 
     public function update(int $id)
@@ -156,8 +157,9 @@ class LogbookController extends Controller
         }
 
         $logbook = $result['data']['item'];
+        $images = $result['data']['images'];
 
-        return view('_admin.logbook.update', compact('logbook'));
+        return view('_admin.logbook.update', compact('logbook', 'images'));
     }
 
     public function doUpdate(Request $request, int $id)
@@ -165,20 +167,21 @@ class LogbookController extends Controller
         $validated = $request->validate([
             'tanggal' => 'required|date',
             'deskripsi' => 'required|string|max:2000',
+            'images' => 'nullable|array|max:10',
+            'images.*' => 'nullable|image|max:5120',
         ]);
 
         $result = $this->logbookUsecase->update($id, $validated, Auth::id());
 
         if (!$result['success']) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', $result['message'] ?? ResponseConst::DEFAULT_ERROR_MESSAGE);
+            return back()->withInput()->with('error', $result['message'] ?? 'Gagal mengupdate data.');
         }
 
-        return redirect()
-            ->route('admin.logbook.index')
-            ->with('success', ResponseConst::SUCCESS_MESSAGE_UPDATED);
+        if ($request->hasFile('images')) {
+            $this->logbookUsecase->uploadImages($id, $request->file('images'), Auth::id());
+        }
+
+        return redirect()->route('admin.logbook.index')->with('success', ResponseConst::SUCCESS_MESSAGE_UPDATED);
     }
 
     public function delete(int $id)
@@ -194,5 +197,16 @@ class LogbookController extends Controller
         return redirect()
             ->route('admin.logbook.index')
             ->with('success', ResponseConst::SUCCESS_MESSAGE_DELETED);
+    }
+
+    public function deleteImage(int $id)
+    {
+        $result = $this->logbookUsecase->deleteImage($id, Auth::id());
+
+        if (!$result['success']) {
+            return back()->with('error', $result['message'] ?? ResponseConst::DEFAULT_ERROR_MESSAGE);
+        }
+
+        return back()->with('success', ResponseConst::SUCCESS_MESSAGE_DELETED);
     }
 }
