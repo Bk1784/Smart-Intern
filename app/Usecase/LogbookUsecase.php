@@ -25,7 +25,7 @@ class LogbookUsecase
     }
 
     public function getAll(int $userId, ?string $startDate = null, ?string $endDate = null): array
-    {
+    {//
         try {
             $query = DB::table(DatabaseConst::LOGBOOK())
                 ->whereNull('deleted_at')
@@ -50,38 +50,6 @@ class LogbookUsecase
                 ResponseConst::HTTP_SUCCESS
             );
         } catch (Exception $e) {
-            Log::error(
-                message: $e->getMessage(),
-                context: [
-                    'method' => __METHOD__,
-                ]
-            );
-
-            return Response::buildErrorService($e->getMessage());
-        }
-    }
-
-   public function create(array $data, int $userId): array
-    {
-        DB::beginTransaction();
-        try {
-            $id = DB::table(DatabaseConst::LOGBOOK())
-                ->insertGetId([
-                    'user_id' => $userId,
-                    'tanggal' => $data['tanggal'],
-                    'deskripsi' => $data['deskripsi'],
-                    'created_by' => $userId,
-                    'created_at' => now(),
-                ]);
-
-            DB::commit();
-
-            return Response::buildSuccessCreated([
-                'id' => $id,
-            ]);
-        } catch (Exception $e) {
-            DB::rollback();
-
             Log::error(
                 message: $e->getMessage(),
                 context: [
@@ -127,6 +95,37 @@ class LogbookUsecase
         }
     }
 
+   public function create(array $data, int $userId): array
+    {
+        DB::beginTransaction();
+        try {
+            $id = DB::table(DatabaseConst::LOGBOOK())
+                ->insertGetId([
+                    'user_id' => $userId,
+                    'tanggal' => $data['tanggal'],
+                    'deskripsi' => $data['deskripsi'],
+                    'created_by' => $userId,
+                    'created_at' => now(),
+                ]);
+
+            DB::commit();
+
+            return Response::buildSuccessCreated([
+                'id' => $id,
+            ]);
+        } catch (Exception $e) {
+            DB::rollback();
+
+            Log::error(
+                message: $e->getMessage(),
+                context: [
+                    'method' => __METHOD__,
+                ]
+            );
+
+            return Response::buildErrorService($e->getMessage());
+        }
+    }
 
     public function update(int $id, array $data, int $userId): array
     {

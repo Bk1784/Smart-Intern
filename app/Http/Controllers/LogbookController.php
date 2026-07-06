@@ -22,7 +22,7 @@ class LogbookController extends Controller
         $year = $request->query('year');
 
         $startDate = null;
-        $endDate = null;
+        $endDate = null; //
 
         if ($month && $year) {
             $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->format('Y-m-d');

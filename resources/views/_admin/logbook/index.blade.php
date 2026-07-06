@@ -123,16 +123,13 @@
                                 title="Edit">
                                 @include('_admin._layout.icons.pencil')
                             </a>
-                            <form action="{{ route('admin.logbook.delete', $d['id']) }}" method="POST" navigate-form style="margin:0" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
-                                    class="inline-flex items-center justify-center size-8 text-sm font-semibold rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 focus:outline-none focus:bg-red-100 disabled:opacity-50 disabled:pointer-events-none dark:border-red-800 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-800/30 dark:hover:border-red-700 cursor-pointer"
-                                    title="Delete"
-                                    onclick="return confirm('Hapus logbook ini?')">
-                                    @include('_admin._layout.icons.trash')
-                                </button>
-                            </form>
+                            <button type="button"
+                                class="inline-flex items-center justify-center size-8 text-sm font-semibold rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 focus:outline-none focus:bg-red-100 disabled:opacity-50 disabled:pointer-events-none dark:border-red-800 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-800/30 dark:hover:border-red-700 cursor-pointer"
+                                title="Delete"
+                                data-hs-overlay="#delete-logbook-modal"
+                                onclick="setDeleteLogbookAction('{{ route('admin.logbook.delete', $d['id']) }}', '{{ $d['tanggal'] }}')">
+                                @include('_admin._layout.icons.trash')
+                            </button>
                         </x-admin.table.td>
                     </x-admin.table.tr>
                 @empty
@@ -145,4 +142,20 @@
             </x-admin.table.tbody>
         </x-admin.table>
     </x-admin.table.wrapper>
+
+    <x-admin.confirm-modal
+        id="delete-logbook-modal"
+        title="Hapus Logbook"
+        message="Apakah Anda yakin ingin menghapus logbook ini? Tindakan ini tidak dapat dibatalkan."
+        confirmText="Ya, Hapus" />
+
+    @push('scripts')
+        <script>
+            function setDeleteLogbookAction(url, tanggal) {
+                document.getElementById('delete-logbook-modal-form').action = url;
+                document.getElementById('delete-logbook-modal-message').textContent =
+                    'Apakah Anda yakin ingin menghapus logbook tanggal ' + tanggal + '? Tindakan ini tidak dapat dibatalkan.';
+            }
+        </script>
+    @endpush
 @endsection
