@@ -125,9 +125,8 @@
                             </a>
                             <button type="button"
                                 class="inline-flex items-center justify-center size-8 text-sm font-semibold rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 focus:outline-none focus:bg-red-100 disabled:opacity-50 disabled:pointer-events-none dark:border-red-800 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-800/30 dark:hover:border-red-700 cursor-pointer"
-                                title="Delete"
-                                data-hs-overlay="#delete-logbook-modal"
-                                onclick="setDeleteLogbookAction('{{ route('admin.logbook.delete', $d['id']) }}', '{{ $d['tanggal'] }}')">
+                                title="Delete" data-hs-overlay="#delete-modal"
+                                onclick="setDeleteData('{{ $d['id'] }}', '{{ $d['tanggal'] }}')">
                                 @include('_admin._layout.icons.trash')
                             </button>
                         </x-admin.table.td>
@@ -143,19 +142,61 @@
         </x-admin.table>
     </x-admin.table.wrapper>
 
-    <x-admin.confirm-modal
-        id="delete-logbook-modal"
-        title="Hapus Logbook"
-        message="Apakah Anda yakin ingin menghapus logbook ini? Tindakan ini tidak dapat dibatalkan."
-        confirmText="Ya, Hapus" />
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="hs-overlay hidden size-full fixed top-0 start-0 z-80 overflow-x-hidden overflow-y-auto"
+        role="dialog" tabindex="-1" aria-labelledby="delete-modal-label">
+        <div
+            class="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-500 mt-0 opacity-0 ease-out transition-all sm:max-w-lg sm:w-full m-3 sm:mx-auto">
+            <div
+                class="relative flex flex-col bg-white border shadow-sm rounded-xl dark:bg-neutral-800 dark:border-neutral-700">
+                <div class="absolute top-2 end-2">
+                    <button type="button"
+                        class="size-8 inline-flex justify-center items-center gap-x-2 rounded-full border border-transparent bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:text-neutral-400 dark:focus:bg-neutral-600"
+                        aria-label="Close" data-hs-overlay="#delete-modal">
+                        <span class="sr-only">Close</span>
+                        @include('_admin._layout.icons.close_modal')
+                    </button>
+                </div>
 
-    @push('scripts')
-        <script>
-            function setDeleteLogbookAction(url, tanggal) {
-                document.getElementById('delete-logbook-modal-form').action = url;
-                document.getElementById('delete-logbook-modal-message').textContent =
-                    'Apakah Anda yakin ingin menghapus logbook tanggal ' + tanggal + '? Tindakan ini tidak dapat dibatalkan.';
-            }
-        </script>
-    @endpush
+                <div class="p-4 sm:p-10 text-center overflow-y-auto">
+                    <span
+                        class="mb-4 inline-flex justify-center items-center size-14 rounded-full border-4 border-red-50 bg-red-100 text-red-500 dark:bg-red-700 dark:border-red-600 dark:text-red-100">
+                        @include('_admin._layout.icons.warning_modal')
+                    </span>
+
+                    <h3 id="delete-modal-label" class="mb-2 text-xl font-bold text-gray-800 dark:text-neutral-200">
+                        Hapus Logbook
+                    </h3>
+                    <p class="text-gray-500 dark:text-neutral-500">
+                        Apakah Anda yakin ingin menghapus logbook tanggal <span id="delete-logbook-tanggal"
+                            class="font-semibold text-gray-800 dark:text-neutral-200"></span>?
+                        <br>Tindakan ini tidak dapat dibatalkan.
+                    </p>
+
+                    <div class="mt-6 flex justify-center gap-x-4">
+                        <button type="button"
+                            class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:bg-gray-50 dark:bg-transparent dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800"
+                            data-hs-overlay="#delete-modal">
+                            Batal
+                        </button>
+                        <form id="delete-form" method="POST" class="inline" navigate-form>
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit"
+                                class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:bg-red-700 disabled:opacity-50 disabled:pointer-events-none">
+                                Ya, Hapus
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setDeleteData(id, tanggal) {
+            document.getElementById('delete-logbook-tanggal').textContent = tanggal;
+            document.getElementById('delete-form').action = '{{ url('admin/logbook/delete') }}/' + id;
+        }
+    </script>
 @endsection
