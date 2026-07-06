@@ -4,7 +4,8 @@
 @section('title', 'Detail Logbook')
 
 @section('content')
-    <x-admin.page-header title="Detail Logbook" subtitle="Logbook Pengguna" />
+
+    <x-admin.page-header title="Edit Logbook" subtitle="Logbook Pengguna" :back-url="route('admin.logbook.index')" />
 
     <x-admin.card fit class="max-w-2xl">
         <div class="space-y-6">
@@ -21,9 +22,7 @@
                 <p class="text-sm font-medium text-gray-500 dark:text-neutral-500 mb-2 mt-4">
                     Deskripsi Kegiatan
                 </p>
-                <p class="text-sm text-gray-800 dark:text-neutral-200 leading-6 whitespace-pre-line">
-                    {{ $logbook['deskripsi'] }}
-                </p>
+                <p class="text-sm text-gray-800 dark:text-neutral-200 leading-6 whitespace-pre-line">{{ $logbook['deskripsi'] }}</p>
             </div>
 
             @if($images->isNotEmpty())

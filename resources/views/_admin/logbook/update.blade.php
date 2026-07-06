@@ -5,7 +5,7 @@
 
 @section('content')
 
-    <x-admin.page-header title="Edit Logbook" subtitle="Logbook Pengguna" />
+    <x-admin.page-header title="Edit Logbook" subtitle="Logbook Pengguna" :back-url="route('admin.logbook.index')" />
 
     <div class="max-w-2xl space-y-5">
 
@@ -23,17 +23,13 @@
                                 <img src="{{ Storage::url($image->file_path) }}"
                                     class="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-neutral-700 group-hover:opacity-75 transition">
                             </a>
-                            <form action="{{ route('admin.logbook.image_delete', $image->id) }}" method="POST" navigate-form
-                                class="absolute top-1 right-1">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
-                                    class="size-6 inline-flex items-center justify-center rounded-full bg-white/90 text-red-600 hover:bg-white shadow-sm dark:bg-neutral-900/90"
-                                    title="Hapus foto"
-                                    onclick="return confirm('Hapus foto ini?')">
-                                    @include('_admin._layout.icons.trash')
-                                </button>
-                            </form>
+                            <button type="button"
+                                class="delete-photo-trigger absolute top-1 right-1 size-6 inline-flex items-center justify-center rounded-full bg-white/90 text-red-600 hover:bg-white shadow-sm dark:bg-neutral-900/90"
+                                title="Hapus foto"
+                                data-hs-overlay="#delete-photo-modal"
+                                data-action="{{ route('admin.logbook.image_delete', $image->id) }}">
+                                @include('_admin._layout.icons.trash')
+                            </button>
                         </div>
                     @endforeach
                 </div>
@@ -74,20 +70,10 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium mb-2 text-gray-800 dark:text-neutral-200">
-                            Tambah Foto Kegiatan
-                        </label>
-                        <input type="file" name="images[]" multiple accept="image/*"
-                            class="block w-full text-sm text-gray-500 file:me-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/20 dark:file:text-blue-400">
-                        <p class="mt-1.5 text-xs text-gray-400 dark:text-neutral-500">
-                            Foto baru akan ditambahkan ke foto yang sudah ada. Maksimal 10 foto sekaligus, masing-masing 5MB.
-                        </p>
-                        @error('images')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                        @error('images.*')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        <x-admin.file-dropzone
+                            name="images[]"
+                            label="Tambah Foto Kegiatan"
+                            hint="Foto baru akan ditambahkan ke foto yang sudah ada. Maksimal 10 foto sekaligus, masing-masing 5MB." />
                     </div>
                 </div>
             </x-admin.card>
@@ -103,6 +89,56 @@
         </form>
     </div>
 
+    {{-- Delete Photo Confirmation Modal --}}
+    <div id="delete-photo-modal" class="hs-overlay hidden size-full fixed top-0 start-0 z-80 overflow-x-hidden overflow-y-auto"
+        role="dialog" tabindex="-1" aria-labelledby="delete-photo-modal-label">
+        <div
+            class="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-500 mt-0 opacity-0 ease-out transition-all sm:max-w-lg sm:w-full m-3 sm:mx-auto">
+            <div
+                class="relative flex flex-col bg-white border shadow-sm rounded-xl dark:bg-neutral-800 dark:border-neutral-700">
+                <div class="absolute top-2 end-2">
+                    <button type="button"
+                        class="size-8 inline-flex justify-center items-center gap-x-2 rounded-full border border-transparent bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:bg-gray-200 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:text-neutral-400 dark:focus:bg-neutral-600"
+                        aria-label="Close" data-hs-overlay="#delete-photo-modal">
+                        <span class="sr-only">Close</span>
+                        @include('_admin._layout.icons.close_modal')
+                    </button>
+                </div>
+
+                <div class="p-4 sm:p-10 text-center overflow-y-auto">
+                    <span
+                        class="mb-4 inline-flex justify-center items-center size-14 rounded-full border-4 border-red-50 bg-red-100 text-red-500 dark:bg-red-700 dark:border-red-600 dark:text-red-100">
+                        @include('_admin._layout.icons.warning_modal')
+                    </span>
+
+                    <h3 id="delete-photo-modal-label" class="mb-2 text-xl font-bold text-gray-800 dark:text-neutral-200">
+                        Hapus Foto
+                    </h3>
+                    <p class="text-gray-500 dark:text-neutral-500">
+                        Apakah Anda yakin ingin menghapus foto ini?
+                        <br>Tindakan ini tidak dapat dibatalkan.
+                    </p>
+
+                    <div class="mt-6 flex justify-center gap-x-4">
+                        <button type="button"
+                            class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:bg-gray-50 dark:bg-transparent dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800"
+                            data-hs-overlay="#delete-photo-modal">
+                            Batal
+                        </button>
+                        <form id="delete-photo-form" method="POST" class="inline" navigate-form>
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit"
+                                class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:bg-red-700 disabled:opacity-50 disabled:pointer-events-none">
+                                Ya, Hapus
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -115,6 +151,12 @@
                 altFormat: "d F Y",
                 locale: "id",
                 maxDate: "today",
+            });
+
+            document.querySelectorAll('.delete-photo-trigger').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    document.getElementById('delete-photo-form').action = this.dataset.action;
+                });
             });
         </script>
     @endpush

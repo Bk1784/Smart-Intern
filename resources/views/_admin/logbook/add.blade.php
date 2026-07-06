@@ -4,7 +4,7 @@
 
 @section('content')
 
-    <x-admin.page-header title="Tambah Logbook" subtitle="Logbook Pengguna" />
+        <x-admin.page-header title="Edit Logbook" subtitle="Logbook Pengguna" :back-url="route('admin.logbook.index')" />
 
     <div class="max-w-2xl">
         <form action="{{ route('admin.logbook.create') }}" method="POST" navigate-form enctype="multipart/form-data">
@@ -37,21 +37,12 @@
                         @enderror
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium mb-2 text-gray-800 dark:text-neutral-200">
-                            Foto Kegiatan
-                        </label>
-                        <input type="file" name="images[]" multiple accept="image/*"
-                            class="block w-full text-sm text-gray-500 file:me-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/20 dark:file:text-blue-400">
-                        <p class="mt-1.5 text-xs text-gray-400 dark:text-neutral-500">
-                            Bisa pilih lebih dari 1 foto. Maksimal 10 foto, masing-masing 5MB.
-                        </p>
-                        @error('images')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                        @error('images.*')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        <div>
+                        <x-admin.file-dropzone
+                            name="images[]"
+                            label="Foto Kegiatan"
+                            hint="Bisa pilih lebih dari 1 foto. Maksimal 10 foto, masing-masing 5MB." />
+                        </div>
                     </div>
                 </div>
             </x-admin.card>

@@ -32,10 +32,15 @@ document.addEventListener('DOMContentLoaded', function () {
             item.innerHTML = `
                 <img src="${url}" class="w-full h-full object-cover">
                 <button type="button" data-index="${index}"
-                    class="remove-preview-btn absolute top-1.5 right-1.5 z-10 size-6 inline-flex items-center justify-center rounded-full bg-white/95 text-red-600 hover:bg-red-50 shadow-sm dark:bg-neutral-900/95 dark:hover:bg-red-900/30"
+                    class="remove-preview-btn absolute top-1 right-1 size-6 inline-flex items-center justify-center rounded-full bg-white/90 text-red-600 hover:bg-white shadow-sm dark:bg-neutral-900/90"
                     title="Batalkan foto ini">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        <line x1="10" x2="10" y1="11" y2="17" />
+                        <line x1="14" x2="14" y1="11" y2="17" />
                     </svg>
                 </button>
             `;
