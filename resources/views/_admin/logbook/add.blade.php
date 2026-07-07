@@ -4,7 +4,7 @@
 
 @section('content')
 
-        <x-admin.page-header title="Edit Logbook" subtitle="Logbook Pengguna" :back-url="route('admin.logbook.index')" />
+    <x-admin.page-header title="Edit Logbook" subtitle="Logbook Pengguna" :back-url="route('admin.logbook.index')" />
 
     <div class="max-w-2xl">
         <form action="{{ route('admin.logbook.create') }}" method="POST" navigate-form enctype="multipart/form-data">
