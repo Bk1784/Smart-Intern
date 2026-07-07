@@ -28,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
             fold: true,
         );
 
+        Blaze::optimize()->in(
+            resource_path('views/components/admin'),
+            fold: false,
+        );
+
         View::composer('_admin._layout.sidebar.*', function ($view) {
             if (! Auth::check()) {
                 return;

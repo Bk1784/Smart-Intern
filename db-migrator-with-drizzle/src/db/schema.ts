@@ -1,5 +1,6 @@
 import {
     bigint,
+    date,
     index,
     int,
     longtext,
@@ -157,4 +158,29 @@ export const sidebarMenusTable = mysqlTable('sidebar_menus', {
 }, (t) => [
     index('sidebar_menus_parent_id_index').on(t.parent_id),
     index('sidebar_menus_group_sort_order_index').on(t.group, t.sort_order),
+]);
+
+export const logbooksTable = mysqlTable('logbooks', {
+    id: bigint({ mode: 'number', unsigned: true }).autoincrement().primaryKey(),
+    user_id: bigint({ mode: 'number', unsigned: true }).notNull().references(() => usersTable.id),
+    tanggal: date().notNull(),
+    deskripsi: text().notNull(),
+    created_by: bigint({ mode: 'number', unsigned: true }),
+    updated_by: bigint({ mode: 'number', unsigned: true }),
+    deleted_by: bigint({ mode: 'number', unsigned: true }),
+    created_at: timestamp(),
+    updated_at: timestamp(),
+    deleted_at: timestamp(),
+}, (t) => [
+    index('logbooks_user_id_index').on(t.user_id),
+    index('logbooks_tanggal_index').on(t.tanggal),
+]);
+
+export const logbookImagesTable = mysqlTable('logbook_images', {
+    id: bigint({ mode: 'number', unsigned: true }).autoincrement().primaryKey(),
+    logbook_id: bigint({ mode: 'number', unsigned: true }).notNull().references(() => logbooksTable.id),
+    file_path: varchar({ length: 255 }).notNull(),
+    created_at: timestamp(),
+}, (t) => [
+    index('logbook_images_logbook_id_index').on(t.logbook_id),
 ]);

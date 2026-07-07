@@ -125,6 +125,7 @@ class UserUsecase extends Usecase
             return Response::buildErrorService($e->getMessage());
         }
     }
+    
 
     public function update(Request $data, int $id): array|Exception
     {
