@@ -37,7 +37,7 @@ class LogbookController extends Controller
             return [
                 'id' => $item->id,
                 'tanggal' => Carbon::parse($item->tanggal)->translatedFormat('d F Y'),
-                'deskripsi' => Str::words($item->deskripsi, 30, '...'),
+                'deskripsi' => Str::words($item->deskripsi, 15, '...'),
             ];
         });
 
