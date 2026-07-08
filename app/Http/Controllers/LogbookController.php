@@ -18,11 +18,11 @@ class LogbookController extends Controller
 
     public function index(Request $request)
     {
-        $month = $request->query('month');
-        $year = $request->query('year');
+        $month = $request->query('month', now()->month);
+        $year = $request->query('year', now()->year);
 
         $startDate = null;
-        $endDate = null; //
+        $endDate = null;
 
         if ($month && $year) {
             $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->format('Y-m-d');
@@ -47,7 +47,9 @@ class LogbookController extends Controller
             $yearOptions[$y] = (string) $y;
         }
 
-        return view('_admin.logbook.index', compact('data', 'month', 'year', 'yearOptions'));
+        $isDefaultFilter = (int) $month === now()->month && (int) $year === now()->year;
+
+        return view('_admin.logbook.index', compact('data', 'month', 'year', 'yearOptions', 'isDefaultFilter'));
     }
 
     public function detail(int $id)
@@ -71,10 +73,10 @@ class LogbookController extends Controller
         ]);
     }
 
-
     public function download(Request $request)
     {
         $type = $request->query('type', 'custom');
+        $format = $request->query('format', 'pdf');
 
         switch ($type) {
             case 'weekly':
@@ -109,16 +111,20 @@ class LogbookController extends Controller
         }
 
         $report = $result['data']['report'];
+        $periode = Carbon::parse($startDate)->translatedFormat('d F Y') . ' - ' . Carbon::parse($endDate)->translatedFormat('d F Y');
+        $filename = 'logbook-' . Str::slug($label) . '-' . now()->format('Ymd_His');
+
+        if ($format === 'excel') {
+            return $this->logbookUsecase->generateExcel($report, Auth::user(), $periode, $filename);
+        }
 
         $pdf = Pdf::loadView('_admin.logbook.report-pdf', [
             'report' => $report,
             'user' => Auth::user(),
-            'periode' => Carbon::parse($startDate)->translatedFormat('d F Y') . ' - ' . Carbon::parse($endDate)->translatedFormat('d F Y'),
+            'periode' => $periode,
         ]);
 
-        $filename = 'logbook-' . Str::slug($label) . '-' . now()->format('Ymd_His') . '.pdf';
-
-        return $pdf->download($filename);
+        return $pdf->download($filename . '.pdf');
     }
 
     public function add()

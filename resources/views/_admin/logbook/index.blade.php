@@ -12,7 +12,7 @@
                 Download
             </button>
 
-            <div class="hs-dropdown-menu w-72 transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden z-20 bg-white rounded-xl shadow-lg dark:bg-neutral-800 dark:border dark:border-neutral-700 p-4 mt-2"
+           <div class="hs-dropdown-menu w-80 transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden z-20 bg-white rounded-xl shadow-lg dark:bg-neutral-800 dark:border dark:border-neutral-700 p-4 mt-2"
                 onclick="event.stopPropagation()">
 
                 {{-- Mode: Rentang Custom --}}
@@ -23,9 +23,14 @@
                         <x-admin.input type="date" name="start_date" size="sm" />
                         <x-admin.input type="date" name="end_date" size="sm" />
                     </div>
-                    <x-admin.button type="submit" size="sm" color="primary" class="w-full justify-center">
-                        Download
-                    </x-admin.button>
+                    <div class="flex items-center gap-2">
+                        <x-admin.button type="submit" name="format" value="pdf" size="sm" color="primary" class="w-full justify-center">
+                            PDF
+                        </x-admin.button>
+                        <x-admin.button type="submit" name="format" value="excel" size="sm" color="outline-secondary" class="w-full justify-center">
+                            Excel
+                        </x-admin.button>
+                    </div>
                 </form>
 
                 {{-- Mode: Mingguan --}}
@@ -34,9 +39,14 @@
                     <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Per Minggu (Senin-Jumat)</p>
                     <input type="week" name="week" required
                         class="py-2 px-3 mb-2 block w-full border-gray-200 rounded-lg text-sm dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-300">
-                    <x-admin.button type="submit" size="sm" color="primary" class="w-full justify-center">
-                        Download
-                    </x-admin.button>
+                    <div class="flex items-center gap-2">
+                        <x-admin.button type="submit" name="format" value="pdf" size="sm" color="primary" class="w-full justify-center">
+                            PDF
+                        </x-admin.button>
+                        <x-admin.button type="submit" name="format" value="excel" size="sm" color="outline-secondary" class="w-full justify-center">
+                            Excel
+                        </x-admin.button>
+                    </div>
                 </form>
 
                 {{-- Mode: Bulanan --}}
@@ -45,12 +55,19 @@
                     <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Per Bulan</p>
                     <input type="month" name="month" required
                         class="py-2 px-3 mb-2 block w-full border-gray-200 rounded-lg text-sm dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-300">
-                    <x-admin.button type="submit" size="sm" color="primary" class="w-full justify-center">
-                        Download
-                    </x-admin.button>
+                    <div class="flex items-center gap-2">
+                        <x-admin.button type="submit" name="format" value="pdf" size="sm" color="primary" class="w-full justify-center">
+                            PDF
+                        </x-admin.button>
+                        <x-admin.button type="submit" name="format" value="excel" size="sm" color="outline-secondary" class="w-full justify-center">
+                            Excel
+                        </x-admin.button>
+                    </div>
                 </form>
 
             </div>
+
+
             </div>
             
             <x-admin.button href="{{ route('admin.logbook.add') }}" class="font-bold">
@@ -80,7 +97,7 @@
                     @include('_admin._layout.icons.search')
                     Cari
                 </x-admin.button>
-                @if (!empty($month) || !empty($year))
+                @if (!$isDefaultFilter)
                     <x-admin.button href="{{ route('admin.logbook.index') }}" size="sm" color="outline-secondary">
                         @include('_admin._layout.icons.reset')
                         Reset

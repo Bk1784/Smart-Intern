@@ -35,13 +35,21 @@
         table.report-table th, table.report-table td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
         table.report-table th { background-color: #f5f5f5; font-weight: bold; }
         .kosong { color: #999; font-style: italic; }
-        .col-hari { width: 25%; }
+        .col-hari { width: 22%; }
+        .col-gambar { width: 25%; }
         .content-wrapper { padding: 0 20px; }
+
+        .entry-images img {
+            width: 55px;
+            height: 55px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            margin: 2px;
+        }
     </style>
 </head>
 <body>
 
-    {{-- Header Logo --}}
     <div class="header-logo">
         <table>
             <tr>
@@ -69,6 +77,7 @@
                 <tr>
                     <th class="col-hari">Hari, Tanggal</th>
                     <th>Deskripsi Kegiatan</th>
+                    <th class="col-gambar">Gambar</th>
                 </tr>
             </thead>
             <tbody>
@@ -82,10 +91,21 @@
                                 <span class="kosong">Tidak ada aktivitas tercatat</span>
                             @endif
                         </td>
+                        <td>
+                            @if(!empty($item['images']))
+                                <div class="entry-images">
+                                    @foreach($item['images'] as $img)
+                                        <img src="data:{{ $img['mime'] }};base64,{{ $img['base64'] }}">
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="kosong">-</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="2">Tidak ada hari kerja pada rentang ini.</td>
+                        <td colspan="3">Tidak ada hari kerja pada rentang ini.</td>
                     </tr>
                 @endforelse
             </tbody>
