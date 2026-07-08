@@ -216,32 +216,6 @@ class LogbookUsecase
         }
     }
 
-      /**
-     * Hitung tanggal Senin s/d Jumat dari input minggu (format: "2026-W27")
-     */
-    public function getWeekRange(string $weekInput): array
-    {
-        [$year, $week] = explode('-W', $weekInput);
-
-        $monday = Carbon::now()->setISODate((int) $year, (int) $week, 1);
-        $friday = $monday->copy()->addDays(4);
-
-        return [$monday->format('Y-m-d'), $friday->format('Y-m-d')];
-    }
-
-    /**
-     * Hitung tanggal awal s/d akhir dari input bulan (format: "2026-06")
-     */
-    public function getMonthRange(string $monthInput): array
-    {
-        $date = Carbon::createFromFormat('Y-m', $monthInput);
-
-        return [
-            $date->copy()->startOfMonth()->format('Y-m-d'),
-            $date->copy()->endOfMonth()->format('Y-m-d'),
-        ];
-    }
-
     /**
      * Generate daftar tanggal kerja (Senin-Jumat, bukan hari libur) dalam rentang
      */

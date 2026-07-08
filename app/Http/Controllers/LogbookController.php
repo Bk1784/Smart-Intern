@@ -75,32 +75,17 @@ class LogbookController extends Controller
 
     public function download(Request $request)
     {
-        $type = $request->query('type', 'custom');
+        $request->validate([
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer',
+        ]);
+
         $format = $request->query('format', 'pdf');
+        $month = $request->query('month');
+        $year = $request->query('year');
 
-        switch ($type) {
-            case 'weekly':
-                $request->validate(['week' => 'required']);
-                [$startDate, $endDate] = $this->logbookUsecase->getWeekRange($request->query('week'));
-                $label = 'Mingguan';
-                break;
-
-            case 'monthly':
-                $request->validate(['month' => 'required']);
-                [$startDate, $endDate] = $this->logbookUsecase->getMonthRange($request->query('month'));
-                $label = 'Bulanan';
-                break;
-
-            default:
-                $request->validate([
-                    'start_date' => 'required|date',
-                    'end_date' => 'required|date|after_or_equal:start_date',
-                ]);
-                $startDate = $request->query('start_date');
-                $endDate = $request->query('end_date');
-                $label = 'Custom';
-                break;
-        }
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->format('Y-m-d');
+        $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->format('Y-m-d');
 
         $result = $this->logbookUsecase->getReportData(Auth::id(), $startDate, $endDate);
 
@@ -111,8 +96,8 @@ class LogbookController extends Controller
         }
 
         $report = $result['data']['report'];
-        $periode = Carbon::parse($startDate)->translatedFormat('d F Y') . ' - ' . Carbon::parse($endDate)->translatedFormat('d F Y');
-        $filename = 'logbook-' . Str::slug($label) . '-' . now()->format('Ymd_His');
+        $periode = Carbon::parse($startDate)->translatedFormat('F Y');
+        $filename = 'logbook-' . Str::slug($periode) . '-' . now()->format('Ymd_His');
 
         if ($format === 'excel') {
             return $this->logbookUsecase->generateExcel($report, Auth::user(), $periode, $filename);
