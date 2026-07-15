@@ -12,6 +12,11 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Presenter\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
 class LogbookUsecase
@@ -211,32 +216,6 @@ class LogbookUsecase
         }
     }
 
-      /**
-     * Hitung tanggal Senin s/d Jumat dari input minggu (format: "2026-W27")
-     */
-    public function getWeekRange(string $weekInput): array
-    {
-        [$year, $week] = explode('-W', $weekInput);
-
-        $monday = Carbon::now()->setISODate((int) $year, (int) $week, 1);
-        $friday = $monday->copy()->addDays(4);
-
-        return [$monday->format('Y-m-d'), $friday->format('Y-m-d')];
-    }
-
-    /**
-     * Hitung tanggal awal s/d akhir dari input bulan (format: "2026-06")
-     */
-    public function getMonthRange(string $monthInput): array
-    {
-        $date = Carbon::createFromFormat('Y-m', $monthInput);
-
-        return [
-            $date->copy()->startOfMonth()->format('Y-m-d'),
-            $date->copy()->endOfMonth()->format('Y-m-d'),
-        ];
-    }
-
     /**
      * Generate daftar tanggal kerja (Senin-Jumat, bukan hari libur) dalam rentang
      */
@@ -274,14 +253,38 @@ class LogbookUsecase
                 ->get()
                 ->keyBy(fn ($item) => Carbon::parse($item->tanggal)->format('Y-m-d'));
 
+            // Ambil semua gambar sekaligus buat semua logbook di rentang ini
+            $logbookIds = $logbooks->pluck('id')->all();
+
+            $images = DB::table(DatabaseConst::LOGBOOK_IMAGE())
+                ->whereIn('logbook_id', $logbookIds)
+                ->orderBy('created_at')
+                ->get()
+                ->groupBy('logbook_id');
+
             $report = [];
             foreach ($workdays as $day) {
                 $carbonDay = Carbon::parse($day);
                 $entry = $logbooks->get($day);
 
+                $entryImages = [];
+                if ($entry && isset($images[$entry->id])) {
+                    foreach ($images[$entry->id] as $image) {
+                        $fullPath = storage_path('app/public/' . $image->file_path);
+
+                        if (file_exists($fullPath)) {
+                            $entryImages[] = [
+                                'base64' => base64_encode(file_get_contents($fullPath)),
+                                'mime' => mime_content_type($fullPath),
+                            ];
+                        }
+                    }
+                }
+
                 $report[] = [
                     'tanggal' => $carbonDay->translatedFormat('l, d F Y'),
                     'deskripsi' => $entry ? $entry->deskripsi : null,
+                    'images' => $entryImages,
                 ];
             }
 
@@ -320,6 +323,8 @@ class LogbookUsecase
                 /** @var UploadedFile $file */
                 $path = $file->store('logbook', 'public');
 
+                $this->compressImage(storage_path('app/public/' . $path));
+
                 DB::table(DatabaseConst::LOGBOOK_IMAGE())->insert([
                     'logbook_id' => $logbookId,
                     'file_path' => $path,
@@ -333,6 +338,70 @@ class LogbookUsecase
 
             return Response::buildErrorService($e->getMessage());
         }
+    }
+
+    private function compressImage(string $fullPath): void
+    {
+        if (!file_exists($fullPath)) {
+            return;
+        }
+
+        $imageInfo = getimagesize($fullPath);
+
+        if (!$imageInfo) {
+            return;
+        }
+
+        [$originalWidth, $originalHeight, $imageType] = $imageInfo;
+
+        // Buat resource gambar sesuai tipe filenya
+        $source = match ($imageType) {
+            IMAGETYPE_JPEG => imagecreatefromjpeg($fullPath),
+            IMAGETYPE_PNG => imagecreatefrompng($fullPath),
+            IMAGETYPE_WEBP => imagecreatefromwebp($fullPath),
+            default => null,
+        };
+
+        if (!$source) {
+            return;
+        }
+
+        // Hitung ukuran baru, cuma resize kalau lebih besar dari 700px
+        $maxWidth = 700;
+
+        if ($originalWidth <= $maxWidth) {
+            imagedestroy($source);
+            return;
+        }
+
+        $newWidth = $maxWidth;
+        $newHeight = (int) (($originalHeight / $originalWidth) * $newWidth);
+
+        $resized = imagecreatetruecolor($newWidth, $newHeight);
+
+        // Pertahankan transparansi buat PNG
+        if ($imageType === IMAGETYPE_PNG) {
+            imagealphablending($resized, false);
+            imagesavealpha($resized, true);
+        }
+
+        imagecopyresampled(
+            $resized, $source,
+            0, 0, 0, 0,
+            $newWidth, $newHeight,
+            $originalWidth, $originalHeight
+        );
+
+        // Simpan ulang dengan kualitas 80%, timpa file asli
+        match ($imageType) {
+            IMAGETYPE_JPEG => imagejpeg($resized, $fullPath, 80),
+            IMAGETYPE_PNG => imagepng($resized, $fullPath, 2), // PNG: skala 0-9, ~80% setara level 2
+            IMAGETYPE_WEBP => imagewebp($resized, $fullPath, 80),
+            default => null,
+        };
+
+        imagedestroy($source);
+        imagedestroy($resized);
     }
 
     public function getImages(int $logbookId): array
@@ -375,5 +444,63 @@ class LogbookUsecase
 
             return Response::buildErrorService($e->getMessage());
         }
+    }
+
+    public function generateExcel(array $report, $user, string $periode, string $filename): StreamedResponse
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Laporan Logbook');
+
+        // Judul
+        $sheet->setCellValue('A1', 'Laporan Logbook Aktivitas');
+        $sheet->mergeCells('A1:C1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+
+        // Subjudul
+        $sheet->setCellValue('A2', $user->name . ' - Periode: ' . $periode);
+        $sheet->mergeCells('A2:C2');
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF666666'));
+
+        // Header tabel
+        $sheet->setCellValue('A4', 'Hari, Tanggal');
+        $sheet->setCellValue('B4', 'Deskripsi Kegiatan');
+        $sheet->setCellValue('C4', 'Jumlah Foto');
+
+        $sheet->getStyle('A4:C4')->getFont()->setBold(true);
+        $sheet->getStyle('A4:C4')->getFill()
+            ->setFillType(Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('F5F5F5');
+
+        // Isi data
+        $row = 5;
+        foreach ($report as $item) {
+            $sheet->setCellValue('A' . $row, $item['tanggal']);
+            $sheet->setCellValue('B' . $row, $item['deskripsi'] ?? 'Tidak ada aktivitas tercatat');
+            $sheet->setCellValue('C' . $row, count($item['images'] ?? []));
+
+            $sheet->getStyle('A' . $row . ':C' . $row)->getAlignment()->setVertical(Alignment::VERTICAL_TOP);
+            $sheet->getStyle('B' . $row)->getAlignment()->setWrapText(true);
+
+            $row++;
+        }
+
+        // Lebar kolom
+        $sheet->getColumnDimension('A')->setWidth(22);
+        $sheet->getColumnDimension('B')->setWidth(60);
+        $sheet->getColumnDimension('C')->setWidth(15);
+
+        // Border seluruh tabel
+        $lastRow = $row - 1;
+        $sheet->getStyle('A4:C' . $lastRow)->getBorders()->getAllBorders()
+            ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+        $writer = new Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename . '.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 }

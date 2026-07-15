@@ -5,52 +5,23 @@
 @section('content')
     <x-admin.page-header title="Data Logbook" subtitle="Logbook Pengguna">
         <div class="flex items-center gap-x-2">
-           <div class="hs-dropdown relative inline-flex">
-            <button type="button" 
-                class="hs-dropdown-toggle py-2 px-3 inline-flex items-center gap-x-2 text-sm font-bold rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700">
-                @include('_admin._layout.icons.download')
-                Download
-            </button>
+            <div class="hs-dropdown relative inline-flex">
+                <button type="button" 
+                    class="hs-dropdown-toggle py-2 px-3 inline-flex items-center gap-x-2 text-sm font-bold rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700">
+                    @include('_admin._layout.icons.download')
+                    Download
+                </button>
 
-            <div class="hs-dropdown-menu w-72 transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden z-20 bg-white rounded-xl shadow-lg dark:bg-neutral-800 dark:border dark:border-neutral-700 p-4 mt-2"
-                onclick="event.stopPropagation()">
-
-                {{-- Mode: Rentang Custom --}}
-                <form action="{{ route('admin.logbook.download') }}" method="GET" class="mb-4 pb-4 border-b border-gray-100 dark:border-neutral-700">
-                    <input type="hidden" name="type" value="custom">
-                    <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Rentang Tanggal</p>
-                    <div class="flex items-center gap-2 mb-2">
-                        <x-admin.input type="date" name="start_date" size="sm" />
-                        <x-admin.input type="date" name="end_date" size="sm" />
-                    </div>
-                    <x-admin.button type="submit" size="sm" color="primary" class="w-full justify-center">
-                        Download
-                    </x-admin.button>
-                </form>
-
-                {{-- Mode: Mingguan --}}
-                <form action="{{ route('admin.logbook.download') }}" method="GET" class="mb-4 pb-4 border-b border-gray-100 dark:border-neutral-700">
-                    <input type="hidden" name="type" value="weekly">
-                    <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Per Minggu (Senin-Jumat)</p>
-                    <input type="week" name="week" required
-                        class="py-2 px-3 mb-2 block w-full border-gray-200 rounded-lg text-sm dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-300">
-                    <x-admin.button type="submit" size="sm" color="primary" class="w-full justify-center">
-                        Download
-                    </x-admin.button>
-                </form>
-
-                {{-- Mode: Bulanan --}}
-                <form action="{{ route('admin.logbook.download') }}" method="GET">
-                    <input type="hidden" name="type" value="monthly">
-                    <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Per Bulan</p>
-                    <input type="month" name="month" required
-                        class="py-2 px-3 mb-2 block w-full border-gray-200 rounded-lg text-sm dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-300">
-                    <x-admin.button type="submit" size="sm" color="primary" class="w-full justify-center">
-                        Download
-                    </x-admin.button>
-                </form>
-
-            </div>
+                <div class="hs-dropdown-menu w-52 transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden z-20 bg-white rounded-xl shadow-lg dark:bg-neutral-800 dark:border dark:border-neutral-700 p-2 mt-2">
+                    <a href="{{ route('admin.logbook.download', ['month' => $month, 'year' => $year, 'format' => 'pdf']) }}"
+                        class="flex items-center gap-x-2 py-2 px-3 rounded-lg text-sm text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
+                        Download as PDF
+                    </a>
+                    <a href="{{ route('admin.logbook.download', ['month' => $month, 'year' => $year, 'format' => 'excel']) }}"
+                        class="flex items-center gap-x-2 py-2 px-3 rounded-lg text-sm text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
+                        Download as Excel
+                    </a>
+                </div>
             </div>
             
             <x-admin.button href="{{ route('admin.logbook.add') }}" class="font-bold">
@@ -65,11 +36,11 @@
             class="flex flex-col sm:flex-row items-center gap-3">
             <div class="w-full sm:w-48">
                 <x-admin.select :label="null" name="month" size="sm" :value="$month ?? ''" :options="[
-                    '' => 'Semua Bulan',
-                    '1' => 'Januari', '2' => 'Februari', '3' => 'Maret',
-                    '4' => 'April', '5' => 'Mei', '6' => 'Juni',
-                    '7' => 'Juli', '8' => 'Agustus', '9' => 'September',
-                    '10' => 'Oktober', '11' => 'November', '12' => 'Desember',
+                    '' => 'All Months',
+                    '1' => 'January', '2' => 'February', '3' => 'March',
+                    '4' => 'April', '5' => 'May', '6' => 'June',
+                    '7' => 'July', '8' => 'August', '9' => 'September',
+                    '10' => 'October', '11' => 'November', '12' => 'December',
                 ]" />
             </div>
             <div class="w-full sm:w-32">
@@ -80,7 +51,7 @@
                     @include('_admin._layout.icons.search')
                     Cari
                 </x-admin.button>
-                @if (!empty($month) || !empty($year))
+                @if (!$isDefaultFilter)
                     <x-admin.button href="{{ route('admin.logbook.index') }}" size="sm" color="outline-secondary">
                         @include('_admin._layout.icons.reset')
                         Reset
