@@ -26,14 +26,16 @@ COPY --from=oven/bun:latest /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=caddy:builder /usr/bin/xcaddy /usr/bin/xcaddy
 
 # Build FrankenPHP dengan modul Coraza WAF
-RUN CGO_ENABLED=1 XCADDY_SETCAP=1 \
+RUN CGO_ENABLED=1 \
+    XCADDY_SETCAP=1 \
+    XCADDY_GO_BUILD_FLAGS="-ldflags '-w -s'" \
     CGO_CFLAGS="$(php-config --includes)" \
-    CGO_LDFLAGS="-L/usr/local/lib -lphp -lm" \
+    CGO_LDFLAGS="$(php-config --ldflags) $(php-config --libs)" \
     xcaddy build \
-    --output /usr/local/bin/frankenphp \
-    --with github.com/dunglas/frankenphp=./ \
-    --with github.com/dunglas/frankenphp/caddy=./caddy/ \
-    --with github.com/corazawaf/coraza-caddy/v2
+        --output /usr/local/bin/frankenphp \
+        --with github.com/dunglas/frankenphp=./ \
+        --with github.com/dunglas/frankenphp/caddy=./caddy/ \
+        --with github.com/corazawaf/coraza-caddy/v2
 
 WORKDIR /var/www/html
 
