@@ -31,11 +31,11 @@ RUN CGO_ENABLED=1 \
     XCADDY_GO_BUILD_FLAGS="-ldflags '-w -s'" \
     CGO_CFLAGS="$(php-config --includes)" \
     CGO_LDFLAGS="$(php-config --ldflags) $(php-config --libs)" \
-    xcaddy build \
+    xcaddy build v2.10.0 \
         --output /usr/local/bin/frankenphp \
-        --with github.com/dunglas/frankenphp \
-        --with github.com/dunglas/frankenphp/caddy \
-        --with github.com/corazawaf/coraza-caddy/v2
+        --with github.com/dunglas/frankenphp@v1.7.0 \
+        --with github.com/dunglas/frankenphp/caddy@v1.7.0 \
+        --with github.com/corazawaf/coraza-caddy/v2@v2.1.0
 
 WORKDIR /var/www/html
 
