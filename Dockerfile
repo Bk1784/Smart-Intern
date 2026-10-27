@@ -35,7 +35,8 @@ RUN CGO_ENABLED=1 \
         --output /usr/local/bin/frankenphp \
         --with github.com/dunglas/frankenphp@v1.7.0 \
         --with github.com/dunglas/frankenphp/caddy@v1.7.0 \
-        --with github.com/corazawaf/coraza-caddy/v2@v2.1.0
+        --with github.com/corazawaf/coraza-caddy/v2@v2.1.0 \
+        --with github.com/dunglas/caddy-cbrotli@v1.0.1 \
 
 WORKDIR /var/www/html
 
