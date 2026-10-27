@@ -23,11 +23,25 @@ RUN install-php-extensions \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY --from=oven/bun:latest /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=caddy:builder /usr/bin/xcaddy /usr/bin/xcaddy
+
+# Build FrankenPHP dengan modul Coraza WAF
+RUN CGO_ENABLED=1 XCADDY_SETCAP=1 \
+    CGO_CFLAGS="$(php-config --includes)" \
+    CGO_LDFLAGS="-L/usr/local/lib -lphp -lm" \
+    xcaddy build \
+    --output /usr/local/bin/frankenphp \
+    --with github.com/dunglas/frankenphp=./ \
+    --with github.com/dunglas/frankenphp/caddy=./caddy/ \
+    --with github.com/corazawaf/coraza-caddy/v2
 
 WORKDIR /var/www/html
 
 # Copy the Laravel application files into the container.
 COPY . .
+
+# Konfigurasi WAF (aturan CRS dan coraza.conf)
+COPY docker/waf /etc/caddy/waf
 
 # Start with base PHP config, then add extensions.
 COPY ./deploy/php.ini /usr/local/etc/php/
@@ -47,7 +61,9 @@ RUN bun install
 RUN bun run build
 
 # Laravel artisan commands
-RUN php artisan storage:link && php artisan optimize
+# Jangan jalankan "optimize" di sini: .env tidak ada saat build,
+# sehingga config cache akan menyimpan nilai kosong.
+RUN php artisan storage:link
 
 # Enable PHP extensions
 # RUN docker-php-ext-enable xdebug
