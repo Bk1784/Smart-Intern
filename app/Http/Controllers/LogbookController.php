@@ -18,11 +18,11 @@ class LogbookController extends Controller
 
     public function index(Request $request)
     {
-        $month = $request->query('month');
-        $year = $request->query('year');
+        $month = $request->query('month', now()->month);
+        $year = $request->query('year', now()->year);
 
         $startDate = null;
-        $endDate = null; //
+        $endDate = null;
 
         if ($month && $year) {
             $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->format('Y-m-d');
@@ -37,7 +37,7 @@ class LogbookController extends Controller
             return [
                 'id' => $item->id,
                 'tanggal' => Carbon::parse($item->tanggal)->translatedFormat('d F Y'),
-                'deskripsi' => Str::words($item->deskripsi, 30, '...'),
+                'deskripsi' => Str::words($item->deskripsi, 15, '...'),
             ];
         });
 
@@ -47,7 +47,9 @@ class LogbookController extends Controller
             $yearOptions[$y] = (string) $y;
         }
 
-        return view('_admin.logbook.index', compact('data', 'month', 'year', 'yearOptions'));
+        $isDefaultFilter = (int) $month === now()->month && (int) $year === now()->year;
+
+        return view('_admin.logbook.index', compact('data', 'month', 'year', 'yearOptions', 'isDefaultFilter'));
     }
 
     public function detail(int $id)
@@ -71,34 +73,19 @@ class LogbookController extends Controller
         ]);
     }
 
-
     public function download(Request $request)
     {
-        $type = $request->query('type', 'custom');
+        $request->validate([
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer',
+        ]);
 
-        switch ($type) {
-            case 'weekly':
-                $request->validate(['week' => 'required']);
-                [$startDate, $endDate] = $this->logbookUsecase->getWeekRange($request->query('week'));
-                $label = 'Mingguan';
-                break;
+        $format = $request->query('format', 'pdf');
+        $month = $request->query('month');
+        $year = $request->query('year');
 
-            case 'monthly':
-                $request->validate(['month' => 'required']);
-                [$startDate, $endDate] = $this->logbookUsecase->getMonthRange($request->query('month'));
-                $label = 'Bulanan';
-                break;
-
-            default:
-                $request->validate([
-                    'start_date' => 'required|date',
-                    'end_date' => 'required|date|after_or_equal:start_date',
-                ]);
-                $startDate = $request->query('start_date');
-                $endDate = $request->query('end_date');
-                $label = 'Custom';
-                break;
-        }
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->format('Y-m-d');
+        $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->format('Y-m-d');
 
         $result = $this->logbookUsecase->getReportData(Auth::id(), $startDate, $endDate);
 
@@ -109,16 +96,20 @@ class LogbookController extends Controller
         }
 
         $report = $result['data']['report'];
+        $periode = Carbon::parse($startDate)->translatedFormat('F Y');
+        $filename = 'logbook-' . Str::slug($periode) . '-' . now()->format('Ymd_His');
+
+        if ($format === 'excel') {
+            return $this->logbookUsecase->generateExcel($report, Auth::user(), $periode, $filename);
+        }
 
         $pdf = Pdf::loadView('_admin.logbook.report-pdf', [
             'report' => $report,
             'user' => Auth::user(),
-            'periode' => Carbon::parse($startDate)->translatedFormat('d F Y') . ' - ' . Carbon::parse($endDate)->translatedFormat('d F Y'),
+            'periode' => $periode,
         ]);
 
-        $filename = 'logbook-' . Str::slug($label) . '-' . now()->format('Ymd_His') . '.pdf';
-
-        return $pdf->download($filename);
+        return $pdf->download($filename . '.pdf');
     }
 
     public function add()

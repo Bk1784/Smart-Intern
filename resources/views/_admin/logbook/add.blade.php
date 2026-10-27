@@ -4,7 +4,7 @@
 
 @section('content')
 
-    <x-admin.page-header title="Edit Logbook" subtitle="Logbook Pengguna" :back-url="route('admin.logbook.index')" />
+    <x-admin.page-header title="Tambah Logbook" subtitle="Logbook Pengguna" :back-url="route('admin.logbook.index')" />
 
     <div class="max-w-2xl">
         <form action="{{ route('admin.logbook.create') }}" method="POST" navigate-form enctype="multipart/form-data">
@@ -37,12 +37,11 @@
                         @enderror
                     </div>
 
-                        <div>
+                    <div>
                         <x-admin.file-dropzone
                             name="images[]"
                             label="Foto Kegiatan"
                             hint="Bisa pilih lebih dari 1 foto. Maksimal 10 foto, masing-masing 5MB." />
-                        </div>
                     </div>
                 </div>
             </x-admin.card>
